@@ -1,5 +1,6 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework import status
 from .serializers import *
 from .models import *
 import datetime
@@ -23,6 +24,48 @@ def get_restaurants(request):
         return Response({'no data': 'The data you requested can not be found'})
 
     return Response({'message': serializer.data})
+
+
+@api_view(['POST'])
+def add_hours(request):
+    error = Response(data={'no data': 'The data you requested can not be found'},
+                     status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        start_day = Day.objects.get(day_value=request.data['day_start'])
+        end_day = Day.objects.get(day_value=request.data['day_end'])
+        days = OpenDays(day_start=start_day, day_end=end_day)
+
+    except:
+        print("ERROR")
+        return error
+
+    serializer = OpenDaysSerializer(
+        days, data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+        http201 = create_restaurant(serializer, request.data, error)
+        return http201
+
+    else:
+        print("error")
+        return error
+
+
+def create_restaurant(serializer, post_data, error):
+    rest_serializer = RestaurantSerializer(data=post_data)
+
+    if rest_serializer.is_valid():
+        rest_serializer.save()
+        restaurantId = rest_serializer.data['id']
+        restuarant = Restuarant.objects.get(id=restaurantId)
+        hours = OpenDays.objects.get(id=serializer.data['id'])
+        restuarant.hours.add(hours)
+
+        return Response(data={"good": "Created"}, status=status.HTTP_201_CREATED)
+    else:
+        return error
 
 
 def date_conversion(date):
