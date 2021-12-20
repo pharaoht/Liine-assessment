@@ -9,7 +9,7 @@ from csv import reader
 #     file.write("NEW TEXT FROM PY FILE!!!")
 
 
-path = "pandas\weather_data.csv"
+path = "CSVCode\rest.csv"
 lines = [line for line in open(path)]
 sep = '/'
 data = []
